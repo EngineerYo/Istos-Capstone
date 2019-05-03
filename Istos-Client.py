@@ -6,16 +6,23 @@ import hashlib
 import sys
 import uuid
 
+import numpy as np
+import matplotlib
+
+from matplotlib import pyplot as plt
+from matplotlib import animation as animation
+
+
 ts = socket(AF_INET, SOCK_STREAM)
 ts.bind(('0.0.0.0', 0))
 
-serverAddress = '192.168.1.27'
+serverAddress = 'team-istos.com'
 macAddress = ':'.join(['{:02x}'.format((uuid.getnode() >> ele) & 0xff) for ele in range(0, 8*6, 8)][::-1])
 
 IP = gethostbyname(gethostname())
 ID = 'Istos Client'
 PSPH = 'mitchIsDaddy'
-server = (serverAddress, htons(8900))
+server = (serverAddress, 8900)
 
 def ackProcess(message, sha):
     args = message.split('\t')
@@ -83,15 +90,24 @@ else:
     sys.exit(1)
 
 toDisplay = []
-maxIndex = 49
 
+val0 = []
+val1 = []
+val2 = []
+
+index = []
+count = 0
+maxIndex = 501
+
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
 
 while True:
     queryMessage = 'QUERY\t03\t' + ID + '\t' + '{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()) + '\t0'
-    time.sleep(3.5)
-    ts.send(queryMessage)
+    time.sleep(0.5)
+    ts.send(queryMessage.encode('ascii'))
     data = ts.recv(1024)
-    outData = dataProcess(data)
+    outData = dataProcess(data.decode('ascii'))
 
     if outData[1] == 'msg':
         continue
@@ -108,11 +124,54 @@ while True:
         continue
 
     outVal = interVal.split(' ')
-    if len(toDisplay) != 0 and (outVal[0] == toDisplay[0][0] or outVal[1] == toDisplay[0][1] or outVal[2] == toDisplay[0][2]):
-        continue
-    
+    outVal[0] = float(outVal[0])
+    outVal[1] = float(outVal[1])
+    outVal[2] = float(outVal[2])
+
     if len(toDisplay) >= maxIndex:
-        toDisplay.pop()
-    
-    toDisplay.insert(0, outVal)
-    print(outVal)
+        toDisplay.pop(0)
+        val0.pop(0)
+        val1.pop(0)
+        val2.pop(0)
+        
+    if len(toDisplay) == 0:
+        toDisplay.insert(0, outVal[0])
+        val0.append(outVal[0])
+        val1.append(outVal[1])
+        val2.append(outVal[2])
+
+        
+        if len(index) < maxIndex:
+            index.append(len(index))
+        
+        ax.clear()
+        ax.plot(index, val0, linestyle='-')
+        ax.plot(index, val1, linestyle='-')
+        ax.plot(index, val2, linestyle='-')
+
+        plt.xlim(0, maxIndex)
+        plt.draw()
+        plt.pause(0.5)
+        print(outVal)
+
+    elif not (outVal[0] == val0[-1] or outVal[1] == val1[-1] or outVal[2] == val2[-1]):
+        print('%f' % outVal[0] + '\t' + '%f' % val0[-1])
+        print('%f' % outVal[1] + '\t' + '%f' % val1[-1])
+        print('%f' % outVal[2] + '\t' + '%f' % val2[-1])
+        toDisplay.append(outVal[0])
+        val0.append(outVal[0])
+        val1.append(outVal[1])
+        val2.append(outVal[2])
+        
+        if len(index) < maxIndex:
+            index.append(len(index))
+        
+        ax.clear()
+        ax.plot(index, val0, linestyle='-')
+        ax.plot(index, val1, linestyle='-')
+        ax.plot(index, val2, linestyle='-')
+
+        plt.xlim(0, maxIndex)
+        plt.draw()  
+        plt.pause(0.5)
+        print(outVal)
