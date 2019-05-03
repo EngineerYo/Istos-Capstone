@@ -85,6 +85,7 @@ else:
 toDisplay = []
 maxIndex = 49
 
+
 while True:
     queryMessage = 'QUERY\t03\t' + ID + '\t' + '{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()) + '\t0'
     time.sleep(3.5)
