@@ -1,23 +1,15 @@
-# TO RUN:
-# OPEN TERMINAL
-# cd ~
-# python3 measure11apr19.py
-
-# Simple demo of reading each analog input from the ADS1x15 and printing it to
-# the screen.
-# Author: Tony DiCola
-# License: Public Domain
 import blynklib
 import random
 from socket import socket, getfqdn, AF_INET, SOCK_STREAM, htons, INADDR_ANY, gethostbyname, gethostname
 import time
 import datetime
-# Import the ADS1x15 module.
+
 import adafruit_ads1x15
 from  adafruit_ads1x15.analog_in import AnalogIn
 from  adafruit_ads1x15 import ads1115
 import board
 import busio
+
 import uuid
 import hashlib
 import sys
@@ -168,79 +160,78 @@ curr2 = False
 
 datapoint = 0
 
-#try:
-while True:
-    
-    datapoint = datapoint + 1
-    n = 80
-    
-    val0 = [0]*n
-    val1 = [0]*n
-    val2 = [0]*n
-    
-    sq0 = [0]*n
-    sq1 = [0]*n
-    sq2 = [0]*n
-    
-    for i in range(n):
-        
-        val0[i] = sen0.voltage
-        val1[i] = sen1.voltage
-        val2[i] = sen2.voltage
-        
-        sq0[i] = val0[i]**2
-        sq1[i] = val1[i]**2
-        sq2[i] = val2[i]**2
-            
-    curr0 = ((sum(sq0)/n)**0.5)/6.0*1000.0/1.087
-    curr1 = ((sum(sq1)/n)**0.5)/6.0*1000.0/1.087
-    curr2 = ((sum(sq2)/n)**0.5)/6.0*1000.0/1.087
-    
-    power0 = curr0*120
-    power1 = curr1*120
-    power2 = curr2*120
-    
-    newTime = datetime.datetime.now()
-    dt = (newTime - startTime)
-    dt = dt.seconds + dt.microseconds/1000000.0
-    startTime = newTime 
-    
-    message = '%0.2f\t%0.2f\t%0.2f\t%0.2f' % (dt, power0, power1, power2)
-#    message ='|\t%.2f\t|\t%.2f\t|\t%.2f\t|\t%.2f\t|\t%.2f\t|' % (dt, 1000.0*current, power, 1000.0*newCurrent, newPower)
-    
-    blynk.run()
+try:
+	while True:
+		
+		datapoint = datapoint + 1
+		n = 80
+		
+		val0 = [0]*n
+		val1 = [0]*n
+		val2 = [0]*n
+		
+		sq0 = [0]*n
+		sq1 = [0]*n
+		sq2 = [0]*n
+		
+		for i in range(n):
+			
+			val0[i] = sen0.voltage
+			val1[i] = sen1.voltage
+			val2[i] = sen2.voltage
+			
+			sq0[i] = val0[i]**2
+			sq1[i] = val1[i]**2
+			sq2[i] = val2[i]**2
+				
+		curr0 = ((sum(sq0)/n)**0.5)/6.0*1000.0/1.087
+		curr1 = ((sum(sq1)/n)**0.5)/6.0*1000.0/1.087
+		curr2 = ((sum(sq2)/n)**0.5)/6.0*1000.0/1.087
+		
+		power0 = curr0*120
+		power1 = curr1*120
+		power2 = curr2*120
+		
+		newTime = datetime.datetime.now()
+		dt = (newTime - startTime)
+		dt = dt.seconds + dt.microseconds/1000000.0
+		startTime = newTime 
+		
+		message = '%0.2f\t%0.2f\t%0.2f\t%0.2f' % (dt, power0, power1, power2)
+		
+		blynk.run()
 
-    if datapoint == 10:
-        
-        print(header)
-        print(header2)
-        datapoint = 0
-        
-    print(message)
-    file.write(message + "\n")
-    
-    # outStr = '%f %f %f %f %f' % (dt, 1000.0*current, power, 1000.0*newCurrent, newPower)
-    outStr = '%f %f %f' % (power0, power1, power2)
-    
-    sendMsg = "DATA\t00\t" + ID + "\t" + '{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()) + "\t" + '%d' % len(outStr) + "\t" + outStr + "\0"
-    sendMsgEncode = sendMsg.encode('ascii')
-    ts.send(sendMsgEncode)
-    sha = hashlib.sha256(sendMsgEncode).hexdigest()
-    
-    recvMsg = ts.recv(1024)
-    recv = recvMsg.decode('ascii')
-    result = ack_process(recv, sha)
-       
+		if datapoint == 10:
+			
+			print(header)
+			print(header2)
+			datapoint = 0
+			
+		print(message)
+		file.write(message + "\n")
+		
+		# outStr = '%f %f %f %f %f' % (dt, 1000.0*current, power, 1000.0*newCurrent, newPower)
+		outStr = '%f %f %f' % (power0, power1, power2)
+		
+		sendMsg = "DATA\t00\t" + ID + "\t" + '{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()) + "\t" + '%d' % len(outStr) + "\t" + outStr + "\0"
+		sendMsgEncode = sendMsg.encode('ascii')
+		ts.send(sendMsgEncode)
+		sha = hashlib.sha256(sendMsgEncode).hexdigest()
+		
+		recvMsg = ts.recv(1024)
+		recv = recvMsg.decode('ascii')
+		result = ack_process(recv, sha)
+		   
 
-    if result == '50':
-        pass
-    
-    else:
-        pass
-        # cry
-            
-#    except:
-#    print("Current broken")
+		if result == '50':
+			pass
+		
+		else:
+			pass
+			# cry
+				
+except:
+	print("Current broken")
     
     
 
